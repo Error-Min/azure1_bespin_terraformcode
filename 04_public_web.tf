@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "wlb" {
   name                = "vmss-public-ip"
-  location            = azurerm_resource_group.bespin.location
-  resource_group_name = azurerm_resource_group.bespin.name
+  location            = azurerm_resource_group.Azure1_rg.location
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
   allocation_method   = "Static" #정적 할당
   domain_name_label   = random_string.fqdn.result
   tags                = var.tags
@@ -10,7 +10,7 @@ resource "azurerm_public_ip" "wlb" {
 resource "azurerm_lb" "vmss" {
   name                = "vmss-lb"
   location            = var.location # (2)
-  resource_group_name = azurerm_resource_group.bespin.name
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
 
   frontend_ip_configuration {
     name                 = "webPublicIP"
@@ -25,14 +25,14 @@ resource "azurerm_lb_backend_address_pool" "bpepool" { # 로벨 백엔드 풀
 }
 
 resource "azurerm_lb_probe" "vmss" { # 로벨 프로브s
-  resource_group_name = azurerm_resource_group.bespin.name
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
   loadbalancer_id     = azurerm_lb.vmss.id
   name                = "ssh-running-probe"
   port                = 80 # (4) 80번 포트 외부
 }
 
 resource "azurerm_lb_rule" "lbnatrule" { # 부하분산 규칙 추가
-  resource_group_name            = azurerm_resource_group.bespin.name
+  resource_group_name            = azurerm_resource_group.Azure1_rg.name
   loadbalancer_id                = azurerm_lb.vmss.id # NAT 규칙을 생성할 LoadBalancer의 ID
   name                           = "http"
   protocol                       = "Tcp"
@@ -46,11 +46,11 @@ resource "azurerm_lb_rule" "lbnatrule" { # 부하분산 규칙 추가
 resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   name                            = "sm-wab-vmss"
   location                        = var.location # (2)
-  resource_group_name             = azurerm_resource_group.bespin.name
+  resource_group_name             = azurerm_resource_group.Azure1_rg.name
   sku                             = "Standard_DS1_v2" # 머신 디스크 크기 선택 및 vmss 개수 지정 
   instances                       = 2                 # vmss 가상머신 개수.
-  admin_username                  = "sangmin030"
-  admin_password                  = "!Rlflqhdl21"
+  admin_username                  = var.admin_user
+  admin_password                  = var.admin_password
   disable_password_authentication = false
   custom_data                     = base64encode("websh.sh")
 
