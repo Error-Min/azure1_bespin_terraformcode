@@ -1,7 +1,7 @@
 /*===============cd===============resource_group 설정=======3=============================*/
 variable "resource_group_name" {
    description = "resource group Name"
-   default     = "smt030"
+   default     = "azure1-3tier-terraform"
    # (1) 리소스 그룹 이름 변수
 }
 
