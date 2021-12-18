@@ -13,10 +13,10 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "bespin" {
-  name     = var.resource_group_name # (1)
-  location = var.location            # (2)
-  tags     = var.tags                # 1(3)
+resource "azurerm_resource_group" "Azure1_rg" {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
 }
 
 resource "random_string" "fqdn" {
