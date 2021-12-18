@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "jumpbox" {
   name                = "jumpbox-public-ip"
   location            = var.location # (2)
-  resource_group_name = azurerm_resource_group.bespin.name
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
   allocation_method   = "Static"
   domain_name_label   = "${random_string.fqdn.result}-ssh"
   tags                = var.tags # (3)
@@ -10,7 +10,7 @@ resource "azurerm_public_ip" "jumpbox" {
 resource "azurerm_network_interface" "jumpbox" {
   name                = "jumpbox-nic"
   location            = var.location # (2)
-  resource_group_name = azurerm_resource_group.bespin.name
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
 
   ip_configuration {
     name                          = "IPConfiguration"
@@ -25,7 +25,7 @@ resource "azurerm_network_interface" "jumpbox" {
 resource "azurerm_virtual_machine" "jumpbox" {
   name                  = "jumpbox"
   location              = var.location # (2)
-  resource_group_name   = azurerm_resource_group.bespin.name
+  resource_group_name   = azurerm_resource_group.Azure1_rg.name
   network_interface_ids = [azurerm_network_interface.jumpbox.id]
   vm_size               = "Standard_DS1_v2"
 
