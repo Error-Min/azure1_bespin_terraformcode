@@ -48,10 +48,12 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   location                        = var.location # (2)
   resource_group_name             = azurerm_resource_group.Azure1_rg.name
   sku                             = "Standard_DS1_v2" # 머신 디스크 크기 선택 및 vmss 개수 지정 
-  instances                       = 2                 # vmss 가상머신 개수.
+  instances                       = 3                 # vmss 가상머신 개수.
   admin_username                  = var.admin_user
   admin_password                  = var.admin_password
   disable_password_authentication = false
+  #zones                           = [1, 2]
+  #zone_balance                    = true
   custom_data                     = base64encode("websh.sh")
 
   source_image_reference {
@@ -99,5 +101,67 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
       "script": "${filebase64("websh.sh")}"
   }
   SETTINGS
+  }
+  # Since these can change via auto-scaling outside of Terraform,
+  # let's ignore any changes to the number of instances
+  lifecycle {
+    ignore_changes = ["instances"]
+  }
+}
+
+resource "azurerm_monitor_autoscale_setting" "web_auto_scale" {
+  name                = "autoscale-config"
+  resource_group_name = azurerm_resource_group.Azure1_rg.name
+  location            = azurerm_resource_group.Azure1_rg.location
+  target_resource_id  = azurerm_linux_virtual_machine_scale_set.vmss.id
+
+  profile {
+    name = "AutoScale"
+
+    capacity {
+      default = 2
+      minimum = 1
+      maximum = 7
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "Percentage CPU"
+        metric_resource_id = azurerm_linux_virtual_machine_scale_set.vmss.id
+        time_grain         = "PT1M"
+        statistic          = "Average"
+        time_window        = "PT5M"
+        time_aggregation   = "Average"
+        operator           = "GreaterThan"
+        threshold          = 20
+      }
+
+      scale_action {
+        direction = "Increase"
+        type      = "ChangeCount"
+        value     = "1"
+        cooldown  = "PT1M"
+      }
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "Percentage CPU"
+        metric_resource_id = azurerm_linux_virtual_machine_scale_set.vmss.id
+        time_grain         = "PT1M"
+        statistic          = "Average"
+        time_window        = "PT5M"
+        time_aggregation   = "Average"
+        operator           = "LessThan"
+        threshold          = 25
+      }
+
+      scale_action {
+        direction = "Decrease"
+        type      = "ChangeCount"
+        value     = "1"
+        cooldown  = "PT1M"
+      }
+    }
   }
 }
