@@ -113,7 +113,7 @@ resource "azurerm_monitor_autoscale_setting" "was_auto_scale" {
     name = "AutoScale"
 
     capacity {
-      default = 2
+      default = 3
       minimum = 1
       maximum = 7
     }
@@ -127,13 +127,13 @@ resource "azurerm_monitor_autoscale_setting" "was_auto_scale" {
         time_window        = "PT5M"
         time_aggregation   = "Average"
         operator           = "GreaterThan"
-        threshold          = 20
+        threshold          = 2
       }
 
       scale_action {
         direction = "Increase"
         type      = "ChangeCount"
-        value     = "1"
+        value     = "2"
         cooldown  = "PT1M"
       }
     }
@@ -147,7 +147,7 @@ resource "azurerm_monitor_autoscale_setting" "was_auto_scale" {
         time_window        = "PT5M"
         time_aggregation   = "Average"
         operator           = "LessThan"
-        threshold          = 25
+        threshold          = 1
       }
 
       scale_action {
