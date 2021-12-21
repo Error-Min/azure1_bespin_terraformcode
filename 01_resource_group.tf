@@ -13,11 +13,23 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "Azure1_rg" {
+resource "azurerm_resource_group" "smlee_rg" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 resource "random_string" "fqdn" {
   length  = 6
