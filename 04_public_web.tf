@@ -1,52 +1,43 @@
-resource "azurerm_public_ip" "wlb" {
-  name                = "vmss-public-ip"
-  location            = azurerm_resource_group.Azure1_rg.location
-  resource_group_name = azurerm_resource_group.Azure1_rg.name
-  allocation_method   = "Static" #정적 할당
-  domain_name_label   = random_string.fqdn.result
-  tags                = var.tags
-}
-
-resource "azurerm_lb" "vmss" {
-  name                = "vmss-lb"
+resource "azurerm_lb" "smlee_web_lb" {
+  name                = "smlee-web-lb"
   location            = var.location # (2)
-  resource_group_name = azurerm_resource_group.Azure1_rg.name
+  resource_group_name = azurerm_resource_group.smlee_rg.name
 
   frontend_ip_configuration {
     name                 = "webPublicIP"
-    public_ip_address_id = azurerm_public_ip.wlb.id
+    public_ip_address_id = azurerm_public_ip.smlee_appgw_pubip.id
   }
   tags = var.lbtags
 }
 
-resource "azurerm_lb_backend_address_pool" "bpepool" { # 로벨 백엔드 풀
-  loadbalancer_id = azurerm_lb.vmss.id
-  name            = "sm-web-bend"
+resource "azurerm_lb_backend_address_pool" "smlee_web_bp" { # 로벨 백엔드 풀
+  loadbalancer_id = azurerm_lb.smlee_web_lb.id
+  name            = "sm-web-bp"
 }
 
-resource "azurerm_lb_probe" "vmss" { # 로벨 프로브s
-  resource_group_name = azurerm_resource_group.Azure1_rg.name
-  loadbalancer_id     = azurerm_lb.vmss.id
-  name                = "ssh-running-probe"
+resource "azurerm_lb_probe" "smlee_weblb_probe" { # 로벨 프로브s
+  resource_group_name = azurerm_resource_group.smlee_rg.name
+  loadbalancer_id     = azurerm_lb.smlee_web_lb.id
+  name                = "smlee-web-lb-probe"
   port                = 80 # (4) 80번 포트 외부
 }
 
-resource "azurerm_lb_rule" "lbnatrule" { # 부하분산 규칙 추가
-  resource_group_name            = azurerm_resource_group.Azure1_rg.name
-  loadbalancer_id                = azurerm_lb.vmss.id # NAT 규칙을 생성할 LoadBalancer의 ID
+resource "azurerm_lb_rule" "smlee_weblb_rule" { # 부하분산 규칙 추가
+  resource_group_name            = azurerm_resource_group.smlee_rg.name
+  loadbalancer_id                = azurerm_lb.smlee_web_lb.id # NAT 규칙을 생성할 LoadBalancer의 ID
   name                           = "http"
   protocol                       = "Tcp"
   frontend_port                  = 80                                         # (4) 80번 포트 외부
   backend_port                   = 80                                         # (4) 80번 포트 외부
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.bpepool.id #백엔드 풀 추가
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.smlee_web_bp.id #백엔드 풀 추가
   frontend_ip_configuration_name = "webPublicIP"                                 # 규칙이 연결된 프런트엔드 IP 구성의 이름
-  probe_id                       = azurerm_lb_probe.vmss.id                   #상태 프로브 추가
+  probe_id                       = azurerm_lb_probe.smlee_weblb_probe.id                   #상태 프로브 추가
 }
 
-resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
-  name                            = "sm-wab-vmss"
+resource "azurerm_linux_virtual_machine_scale_set" "smlee_web_vmss" {
+  name                            = "smlee-wab-vmss"
   location                        = var.location # (2)
-  resource_group_name             = azurerm_resource_group.Azure1_rg.name
+  resource_group_name             = azurerm_resource_group.smlee_rg.name
   sku                             = "Standard_DS1_v2" # 머신 디스크 크기 선택 및 vmss 개수 지정 
   instances                       = 3                 # vmss 가상머신 개수.
   admin_username                  = var.admin_user
@@ -73,7 +64,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
     lun     = 0
     caching = "ReadWrite"
     #create_option = "Empty"
-    disk_size_gb         = 10
+    disk_size_gb         = 30
     storage_account_type = "Standard_LRS"
   }
 
@@ -83,8 +74,8 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
 
     ip_configuration {
       name                                   = "IPConfiguration"
-      subnet_id                              = azurerm_subnet.web_vmss.id
-      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.bpepool.id]
+      subnet_id                              = azurerm_subnet.smlee_web_subnet.id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.smlee_web_bp.id]
       primary                                = true
     }
   }
@@ -109,11 +100,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vmss" {
   }
 }
 
-resource "azurerm_monitor_autoscale_setting" "web_auto_scale" {
-  name                = "autoscale-config"
-  resource_group_name = azurerm_resource_group.Azure1_rg.name
-  location            = azurerm_resource_group.Azure1_rg.location
-  target_resource_id  = azurerm_linux_virtual_machine_scale_set.vmss.id
+resource "azurerm_monitor_autoscale_setting" "smlee_web_auto_scale" {
+  name                = "smlee-auto-scale"
+  resource_group_name = azurerm_resource_group.smlee_rg.name
+  location            = azurerm_resource_group.smlee_rg.location
+  target_resource_id  = azurerm_linux_virtual_machine_scale_set.smlee_web_vmss.id
 
   profile {
     name = "AutoScale"
@@ -127,7 +118,7 @@ resource "azurerm_monitor_autoscale_setting" "web_auto_scale" {
     rule {
       metric_trigger {
         metric_name        = "Percentage CPU"
-        metric_resource_id = azurerm_linux_virtual_machine_scale_set.vmss.id
+        metric_resource_id = azurerm_linux_virtual_machine_scale_set.smlee_web_vmss.id
         time_grain         = "PT1M"
         statistic          = "Average"
         time_window        = "PT5M"
@@ -147,7 +138,7 @@ resource "azurerm_monitor_autoscale_setting" "web_auto_scale" {
     rule {
       metric_trigger {
         metric_name        = "Percentage CPU"
-        metric_resource_id = azurerm_linux_virtual_machine_scale_set.vmss.id
+        metric_resource_id = azurerm_linux_virtual_machine_scale_set.smlee_web_vmss.id
         time_grain         = "PT1M"
         statistic          = "Average"
         time_window        = "PT5M"
