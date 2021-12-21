@@ -1,7 +1,10 @@
 #! /bin/bash
 setenforce 0
 sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-systemctl disable --now firewalld
+firewall-cmd --permanent --add-port=8080/tcp
+firewall-cmd --reload
+firewall-cmd --permanent --add-port=8009/tcp
+firewall-cmd --reload
 rm -f /etc/localtime
 ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 cat > .vimrc << EOF
@@ -41,7 +44,7 @@ export MAVEN_HOME=/usr/local/maven
 export PATH=$PATH:$HOME/bin:$MAVEN_HOME/bin
 export TOMCAT_HOME=/usr/local/tomcat9
 export RESOURCEGROUP_NAME=azure1-3tier-terraform
-export MYSQL_SERVER_NAME=smterrordb
+export MYSQL_SERVER_NAME=smlee-mysql
 export MYSQL_SERVER_FULL_NAME=${MYSQL_SERVER_NAME}.privatelink.mysql.database.azure.com
 export MYSQL_SERVER_ADMIN_LOGIN_NAME=azureuser
 export MYSQL_SERVER_ADMIN_PASSWORD=#Rlflqhdl21
