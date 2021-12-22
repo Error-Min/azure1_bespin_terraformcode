@@ -4,6 +4,7 @@ resource "azurerm_public_ip" "smlee_appgw_pubip" {
   resource_group_name = azurerm_resource_group.smlee_rg.name
   allocation_method   = "Static" #정적 할당
   domain_name_label   = random_string.fqdn.result
+  sku                 = "Standard"
   tags                = var.tags
 }
 /*
