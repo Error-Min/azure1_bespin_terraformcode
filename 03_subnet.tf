@@ -35,8 +35,18 @@ resource "azurerm_subnet" "smlee_db_subnet" {
   name                 = "db-subnet"
   virtual_network_name = azurerm_virtual_network.smlee_vnet.name
   resource_group_name  = azurerm_resource_group.smlee_rg.name
-  address_prefixes     = ["10.0.3.0/29"]
   enforce_private_link_endpoint_network_policies = true
+  address_prefixes     = ["10.0.3.0/29"]
+  service_endpoints    = ["Microsoft.Storage"] # 여기 추가 해줘야 유연한거 올라감 ㄹㅇㅋㅋ
+  delegation {
+    name = "fs"
+    service_delegation {
+      name = "Microsoft.DBforMySQL/flexibleServers"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+      ]
+    }
+  }# 단일 서버로 가면 지워야됨
 }
 
 # Junp BoX vmss subnet
