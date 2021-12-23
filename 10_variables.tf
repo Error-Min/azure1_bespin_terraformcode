@@ -40,7 +40,20 @@ variable "application_port" {
 }
 
 
+variable "cache" {
+  description = "The Azure Redis Cache alerts"
 
+  default = {
+    cache_name                        = "smlee_cache"
+    service_name                      = "replace this project name"
+    environment                       = "Stage/Production"
+    scope                             = "/subscriptions/39438a80-f276-4b26-9c26-bd48ff8bc49c/resourceGroups/azure1-3tier-terraform/providers/Microsoft.Cache/Redis/smlee_cache"
+    cache_hit_threshold               = 5000
+    cache_misses_threshold            = 5000
+    cache_cpu_threshold               = 50
+    cache_connected_clients_threshold = 5000
+  }
+}
 
 
 
