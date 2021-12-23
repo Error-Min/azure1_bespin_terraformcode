@@ -37,7 +37,7 @@ resource "azurerm_subnet" "smlee_db_subnet" {
   resource_group_name  = azurerm_resource_group.smlee_rg.name
   enforce_private_link_endpoint_network_policies = true
   address_prefixes     = ["10.0.3.0/29"]
-  service_endpoints    = ["Microsoft.Storage"] # 여기 추가 해줘야 유연한거 올라감 ㄹㅇㅋㅋ
+  /*service_endpoints    = ["Microsoft.Storage"] # 여기 추가 해줘야 유연한거 올라감 ㄹㅇㅋㅋ
   delegation {
     name = "fs"
     service_delegation {
@@ -46,7 +46,7 @@ resource "azurerm_subnet" "smlee_db_subnet" {
         "Microsoft.Network/virtualNetworks/subnets/join/action",
       ]
     }
-  }# 단일 서버로 가면 지워야됨
+  }# 단일 서버로 가면 지워야됨*/
 }
 
 # Junp BoX vmss subnet
